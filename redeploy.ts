@@ -45,6 +45,7 @@ const redeployQueue = new RedeployQueue((input : any, cb : any) => {
 
 const initialize = (params: RedeployParams) => {
   const { app, webhookEndpoint, webhookSecret, deployScriptPath } = params
+  console.log('Init: ', webhookEndpoint, webhookSecret, deployScriptPath)
   const githubPushHandler = createHandler({ path: webhookEndpoint, secret: webhookSecret })
 
   app.post(webhookEndpoint, githubPushHandler, (request: Request, response: Response) => {
