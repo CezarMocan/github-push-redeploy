@@ -3,6 +3,7 @@ import RedeployQueue from 'better-queue'
 import { spawn } from 'child_process'
 import { sendRedeployFailedErrorNotification } from './sns-service'
 import { Request, Response } from 'express'
+import crypto from 'crypto'
 
 type RedeployParams = {
   app: any,
@@ -48,19 +49,29 @@ const initialize = (params: RedeployParams) => {
   console.log('Init: ', webhookEndpoint, webhookSecret, deployScriptPath)
   const githubPushHandler = createHandler({ path: webhookEndpoint, secret: webhookSecret })
 
-  app.post(webhookEndpoint, githubPushHandler, (request: Request, response: Response) => {
+  app.post(webhookEndpoint, (request: any, response: Response) => {
+
+    const data = request.body
+    const rawData = request.rawBody
+
+    let sig = "sha1=" + crypto.createHmac('sha1', webhookSecret).update(rawData).digest('hex');
+    console.log('Sig is: ', sig)
+    console.log('Received: ', request.headers['x-hub-signature'])
+
+    if (sig !== request.headers['x-hub-signature']) {
+      response.status(400)
+      return
+    }
+
+    console.log(`*** Received a push event for ${data.repository.name} to ${data.ref}`)
+    if (data.ref === 'refs/heads/main') {
+      console.log('*** The push is on branch "main", adding a site redeploy job to the queue!')
+      const now = new Date()
+      const hasEmailNotification = (process.env.HAS_AWS_SNS_EMAIL_NOTIFICATION === 'true')
+      redeployQueue.push({ redeploy: true, time: now, scriptPath: deployScriptPath, hasEmailNotification })
+    }
     response.send({ success: true })
   })
-
-  githubPushHandler.on('push', (event: any) => {
-    console.log(`*** Received a push event for ${event.payload.repository.name} to ${event.payload.ref}`)
-      if (event.payload.ref === 'refs/heads/main') {
-        console.log('*** The push is on branch "main", adding a site redeploy job to the queue!')
-        const now = new Date()
-        const hasEmailNotification = (process.env.HAS_AWS_SNS_EMAIL_NOTIFICATION === 'true')
-        redeployQueue.push({ redeploy: true, time: now, scriptPath: deployScriptPath, hasEmailNotification })
-      }
-    })
 }
 
 export default { initialize }

@@ -9,7 +9,12 @@ import TriggerRedeploy from './redeploy'
 const PORT = process.env.PORT || 8090
 
 const app = express()
-app.use(express.json({ limit: '5mb' }))
+app.use(express.json({ 
+  limit: '5mb',
+  verify: (req : any, res, buf) => {
+    req.rawBody = buf.toString();
+  }  
+}))
 app.use(cors())
 
 app.get('/status', (req: Request, res: Response) => { res.send("Redeploy server working.") })
