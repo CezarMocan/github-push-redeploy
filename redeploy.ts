@@ -48,7 +48,8 @@ const initialize = (params: RedeployParams) => {
   console.log('Init: ', webhookEndpoint, webhookSecret, deployScriptPath)
   const githubPushHandler = createHandler({ path: webhookEndpoint, secret: webhookSecret })
 
-  app.post(webhookEndpoint, githubPushHandler, (request: Request, response: Response) => {
+  app.post(webhookEndpoint, (request: Request, response: Response) => {
+    console.log(request.headers)
     response.send({ success: true })
   })
 
