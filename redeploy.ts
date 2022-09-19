@@ -47,7 +47,7 @@ const initialize = (params: RedeployParams) => {
   const { app, webhookEndpoint, webhookSecret, deployScriptPath } = params
   const githubPushHandler = createHandler({ path: webhookEndpoint, secret: webhookSecret })
 
-  app.post('/api/v1/redeploy', githubPushHandler, (request: Request, response: Response) => {
+  app.post(webhookEndpoint, githubPushHandler, (request: Request, response: Response) => {
     response.send({ success: true })
   })
 
