@@ -1,4 +1,4 @@
-import createHandler from 'github-webhook-handler'
+import createHandler from 'git-webhook-handler'
 import RedeployQueue from 'better-queue'
 import { spawn } from 'child_process'
 import { sendRedeployFailedErrorNotification } from './sns-service'
@@ -48,8 +48,7 @@ const initialize = (params: RedeployParams) => {
   console.log('Init: ', webhookEndpoint, webhookSecret, deployScriptPath)
   const githubPushHandler = createHandler({ path: webhookEndpoint, secret: webhookSecret })
 
-  app.post(webhookEndpoint, (request: Request, response: Response) => {
-    console.log(request.headers)
+  app.post(webhookEndpoint, githubPushHandler, (request: Request, response: Response) => {
     response.send({ success: true })
   })
 
